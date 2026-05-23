@@ -97,84 +97,64 @@
       background: #3a76e8;
     }
 
-    /* ---- 消费总结卡片 ---- */
-    .summary-row {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .summary-card {
-      flex: 1;
-      background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .summary-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 4px;
-      height: 100%;
-      border-radius: 12px 0 0 12px;
-    }
-
-    .summary-card.month::before {
-      background: #4f8cff;
-    }
-
-    .summary-card.year::before {
-      background: #34c759;
-    }
-
-    .summary-card.total-card::before {
-      background: #e74c3c;
-    }
-
-    .summary-label {
-      font-size: 12px;
-      color: #999;
-      margin-bottom: 8px;
-      letter-spacing: 0.5px;
-    }
-
-    .summary-value {
-      font-size: 22px;
-      font-weight: 700;
-    }
-
-    .summary-card.month .summary-value { color: #4f8cff; }
-    .summary-card.year .summary-value { color: #34c759; }
-    .summary-card.total-card .summary-value { color: #e74c3c; }
-
-    .summary-sub {
-      font-size: 11px;
-      color: #bbb;
-      margin-top: 6px;
-    }
-
-    /* ---- 月度汇总 ---- */
+    /* ---- 月度区域（含统计） ---- */
     .monthly-section {
       margin-bottom: 24px;
+      margin-top: 8px;
     }
 
     .monthly-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      gap: 12px;
+      margin-bottom: 28px;
       padding: 0 4px;
+      flex-wrap: wrap;
+    }
+
+    .summary-stats {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      padding-bottom: 10px;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .stat-label {
+      font-size: 17px;
+      color: #555;
+      white-space: nowrap;
+    }
+
+    .stat-value {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .stat-item.month .stat-value { color: #4f8cff; }
+    .stat-item.year .stat-value { color: #27ae60; }
+    .stat-item.all .stat-value { color: #e74c3c; }
+
+    .stat-divider {
+      width: 1px;
+      height: 16px;
+      background: #e0e0e0;
     }
 
     .monthly-title {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
       color: #1a1a1a;
+      white-space: nowrap;
+    }
+
+    .monthly-spacer {
+      flex: 1;
     }
 
     .monthly-toggle {
@@ -182,6 +162,7 @@
       color: #4f8cff;
       cursor: pointer;
       user-select: none;
+      white-space: nowrap;
     }
 
     .monthly-toggle:hover {
@@ -258,7 +239,7 @@
     }
 
     .total-amount {
-      font-size: 20px;
+      font-size: 17px;
       font-weight: 700;
       color: #e74c3c;
     }
@@ -441,12 +422,17 @@
       .toolbar-right {
         justify-content: flex-end;
       }
-      .summary-row {
-        flex-direction: column;
+      .monthly-header {
+        gap: 8px;
+      }
+      .summary-stats {
         gap: 10px;
       }
-      .summary-value {
-        font-size: 18px;
+      .stat-value {
+        font-size: 13px;
+      }
+      .stat-label {
+        font-size: 11px;
       }
       .monthly-grid {
         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -457,25 +443,6 @@
 <body>
   <div class="container">
     <h1>个人记账</h1>
-
-    <!-- 消费总结 -->
-    <div class="summary-row">
-      <div class="summary-card month">
-        <div class="summary-label">本月消费</div>
-        <div class="summary-value" id="monthTotal">¥0.00</div>
-        <div class="summary-sub" id="monthSub"></div>
-      </div>
-      <div class="summary-card year">
-        <div class="summary-label">本年消费</div>
-        <div class="summary-value" id="yearTotal">¥0.00</div>
-        <div class="summary-sub" id="yearSub"></div>
-      </div>
-      <div class="summary-card total-card">
-        <div class="summary-label">累计总支出</div>
-        <div class="summary-value" id="allTotal">¥0.00</div>
-        <div class="summary-sub" id="allSub"></div>
-      </div>
-    </div>
 
     <!-- 添加记录表单 -->
     <div class="form-card">
@@ -509,10 +476,27 @@
       </div>
     </div>
 
-    <!-- 月度汇总 -->
+    <!-- 月度区域：统计 + 分类消费 -->
     <div class="monthly-section">
       <div class="monthly-header">
-        <span class="monthly-title">📅 月度分类消费</span>
+        <div class="summary-stats">
+          <div class="stat-item month">
+            <span class="stat-label">本月</span>
+            <span class="stat-value" id="monthTotal">¥0</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item year">
+            <span class="stat-label">本年</span>
+            <span class="stat-value" id="yearTotal">¥0</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item all">
+            <span class="stat-label">累计</span>
+            <span class="stat-value" id="allTotal">¥0</span>
+          </div>
+        </div>
+        <span class="monthly-title">月度分类消费</span>
+        <span class="monthly-spacer"></span>
         <span class="monthly-toggle" id="monthlyToggle" onclick="toggleMonthly()">收起</span>
       </div>
       <div class="monthly-grid" id="monthlyGrid"></div>
@@ -542,8 +526,6 @@
       </div>
       <div class="toolbar-right">
         <button class="btn-clear-filter" id="btnClearFilter" onclick="clearMonthFilter()">✕ 取消月份筛选</button>
-        <button class="btn-export" onclick="exportCSV()">导出 CSV</button>
-        <button class="btn-export" onclick="exportJSON()">导出 JSON</button>
       </div>
     </div>
 
@@ -563,6 +545,12 @@
         </tbody>
       </table>
       <div class="empty-tip" id="emptyTip">还没有记录，添加一笔吧</div>
+    </div>
+
+    <!-- 导出按钮 -->
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+      <button class="btn-export" onclick="exportCSV()">导出 CSV</button>
+      <button class="btn-export" onclick="exportJSON()">导出 JSON</button>
     </div>
   </div>
 
@@ -589,7 +577,7 @@
     });
 
     // 当前选中的月份筛选
-    let filterMonth = null; // 格式 "2026-05"
+    let filterMonth = null;
 
     // 页面加载时设置默认日期，并渲染
     const inputDate = document.getElementById('inputDate');
@@ -623,12 +611,12 @@
       render();
     }
 
-    // 保存到 localStorage
+    // 保存
     function save() {
       localStorage.setItem('ledger_records', JSON.stringify(records));
     }
 
-    // 获取筛选后的记录（分类 + 月份）
+    // 获取筛选后的记录
     function getFilteredRecords() {
       let result = records;
       const catFilter = document.getElementById('filterCategory').value;
@@ -644,7 +632,7 @@
     // 切换月份筛选
     function setMonthFilter(month) {
       if (filterMonth === month) {
-        filterMonth = null; // 取消筛选
+        filterMonth = null;
       } else {
         filterMonth = month;
       }
@@ -670,14 +658,14 @@
       }
     }
 
-    // 渲染所有内容
+    // 渲染
     function render() {
       renderSummary();
       renderMonthlyGrid();
       renderTable();
     }
 
-    // 渲染顶部汇总卡片
+    // 渲染顶部统计
     function renderSummary() {
       const now = new Date();
       const curMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
@@ -690,27 +678,26 @@
       const yearTotal = yearRecords.reduce((s, r) => s + r.amount, 0);
       const allTotal = records.reduce((s, r) => s + r.amount, 0);
 
-      document.getElementById('monthTotal').textContent = '¥' + monthTotal.toFixed(2);
-      document.getElementById('yearTotal').textContent = '¥' + yearTotal.toFixed(2);
-      document.getElementById('allTotal').textContent = '¥' + allTotal.toFixed(2);
-
-      // 副标题：记录笔数
-      document.getElementById('monthSub').textContent = monthRecords.length > 0 ? `${monthRecords.length} 笔` : '暂无记录';
-      document.getElementById('yearSub').textContent = yearRecords.length > 0 ? `${yearRecords.length} 笔 · 月均 ¥${(yearTotal / (now.getMonth()+1)).toFixed(0)}` : '暂无记录';
-      document.getElementById('allSub').textContent = records.length > 0 ? `${records.length} 笔` : '暂无记录';
+      document.getElementById('monthTotal').textContent = '¥' + formatMoney(monthTotal);
+      document.getElementById('yearTotal').textContent = '¥' + formatMoney(yearTotal);
+      document.getElementById('allTotal').textContent = '¥' + formatMoney(allTotal);
     }
 
-    // 渲染月度汇总网格
+    // 简洁金额显示
+    function formatMoney(val) {
+      if (val >= 10000) return (val / 10000).toFixed(1) + 'w';
+      return val.toFixed(2);
+    }
+
+    // 渲染月度汇总
     function renderMonthlyGrid() {
-      // 按月汇总
       const monthMap = {};
       records.forEach(r => {
-        const ym = r.date.substring(0, 7); // "2026-05"
+        const ym = r.date.substring(0, 7);
         if (!monthMap[ym]) monthMap[ym] = 0;
         monthMap[ym] += r.amount;
       });
 
-      // 按月份降序排列
       const months = Object.keys(monthMap).sort((a, b) => b.localeCompare(a));
       const grid = document.getElementById('monthlyGrid');
 
@@ -730,7 +717,6 @@
         `;
       }).join('');
 
-      // 更新清除筛选按钮
       const btnClear = document.getElementById('btnClearFilter');
       if (filterMonth) {
         btnClear.classList.add('show');
@@ -772,7 +758,6 @@
         }).join('');
       }
 
-      // 当前筛选总支出
       const total = filtered.reduce((sum, r) => sum + r.amount, 0);
       document.getElementById('totalAmount').textContent = '¥' + total.toFixed(2);
     }
@@ -823,7 +808,7 @@
       showToast('JSON 已导出');
     }
 
-    // 下载文件辅助函数
+    // 下载文件
     function downloadFile(content, filename, mimeType) {
       const blob = new Blob([content], { type: mimeType });
       const url = URL.createObjectURL(blob);
@@ -834,13 +819,13 @@
       URL.revokeObjectURL(url);
     }
 
-    // 今天的日期字符串
+    // 今天日期字符串
     function todayStr() {
       const d = new Date();
       return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
     }
 
-    // 简易 toast 提示
+    // toast 提示
     function showToast(msg) {
       let toast = document.getElementById('toast');
       if (!toast) {
@@ -855,7 +840,7 @@
       toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 2000);
     }
 
-    // 回车键也能添加
+    // 回车键添加
     document.querySelectorAll('.form-group input').forEach(input => {
       input.addEventListener('keydown', e => { if (e.key === 'Enter') addRecord(); });
     });
