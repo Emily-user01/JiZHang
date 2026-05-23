@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人记账</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 28px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ---- 表单 ---- */
+    .form-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .form-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 100px;
+    }
+
+    .form-group label {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select {
+      height: 40px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 0 12px;
+      font-size: 14px;
+      color: #333;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fff;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: #4f8cff;
+    }
+
+    .btn-add {
+      height: 40px;
+      padding: 0 24px;
+      background: #4f8cff;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+
+    .btn-add:hover {
+      background: #3a76e8;
+    }
+
+    /* ---- 消费总结卡片 ---- */
+    .summary-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .summary-card {
+      flex: 1;
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .summary-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      border-radius: 12px 0 0 12px;
+    }
+
+    .summary-card.month::before {
+      background: #4f8cff;
+    }
+
+    .summary-card.year::before {
+      background: #34c759;
+    }
+
+    .summary-card.total-card::before {
+      background: #e74c3c;
+    }
+
+    .summary-label {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .summary-value {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .summary-card.month .summary-value { color: #4f8cff; }
+    .summary-card.year .summary-value { color: #34c759; }
+    .summary-card.total-card .summary-value { color: #e74c3c; }
+
+    .summary-sub {
+      font-size: 11px;
+      color: #bbb;
+      margin-top: 6px;
+    }
+
+    /* ---- 月度汇总 ---- */
+    .monthly-section {
+      margin-bottom: 24px;
+    }
+
+    .monthly-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 0 4px;
+    }
+
+    .monthly-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .monthly-toggle {
+      font-size: 13px;
+      color: #4f8cff;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .monthly-toggle:hover {
+      text-decoration: underline;
+    }
+
+    .monthly-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      max-height: 400px;
+      overflow-y: auto;
+      transition: max-height 0.3s ease;
+    }
+
+    .monthly-grid.collapsed {
+      max-height: 0;
+      overflow: hidden;
+    }
+
+    .month-item {
+      background: #fff;
+      border-radius: 10px;
+      padding: 14px 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .month-item:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    }
+
+    .month-item.active {
+      border: 2px solid #4f8cff;
+    }
+
+    .month-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .month-amount {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e74c3c;
+    }
+
+    /* ---- 工具栏 ---- */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 0 4px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .total-label {
+      font-size: 14px;
+      color: #888;
+    }
+
+    .total-amount {
+      font-size: 20px;
+      font-weight: 700;
+      color: #e74c3c;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-group label {
+      font-size: 13px;
+      color: #888;
+    }
+
+    .filter-select {
+      height: 34px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 0 10px;
+      font-size: 13px;
+      color: #333;
+      outline: none;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .filter-select:focus {
+      border-color: #4f8cff;
+    }
+
+    .toolbar-right {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-export {
+      height: 34px;
+      padding: 0 16px;
+      background: #fff;
+      color: #4f8cff;
+      border: 1px solid #4f8cff;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-export:hover {
+      background: #4f8cff;
+      color: #fff;
+    }
+
+    .btn-clear-filter {
+      height: 34px;
+      padding: 0 12px;
+      background: #fff0f0;
+      color: #e74c3c;
+      border: 1px solid #ffcccc;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: none;
+    }
+
+    .btn-clear-filter:hover {
+      background: #e74c3c;
+      color: #fff;
+    }
+
+    .btn-clear-filter.show {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    /* ---- 表格 ---- */
+    .table-card {
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      background: #fafafa;
+      font-size: 13px;
+      font-weight: 500;
+      color: #999;
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    tbody td {
+      font-size: 14px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #f5f5f5;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: #fafcff;
+    }
+
+    .col-amount {
+      text-align: right;
+      font-weight: 500;
+      color: #e74c3c;
+    }
+
+    .col-date {
+      color: #666;
+      white-space: nowrap;
+    }
+
+    .col-category {
+      white-space: nowrap;
+    }
+
+    .category-tag {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .btn-del {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .btn-del:hover {
+      color: #e74c3c;
+      background: #fff0f0;
+    }
+
+    .empty-tip {
+      text-align: center;
+      padding: 48px 16px;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    /* ---- 响应式 ---- */
+    @media (max-width: 480px) {
+      .form-row {
+        flex-direction: column;
+      }
+      .form-group {
+        min-width: 100%;
+      }
+      .btn-add {
+        width: 100%;
+      }
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .toolbar-left {
+        justify-content: space-between;
+      }
+      .toolbar-right {
+        justify-content: flex-end;
+      }
+      .summary-row {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .summary-value {
+        font-size: 18px;
+      }
+      .monthly-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>个人记账</h1>
+
+    <!-- 消费总结 -->
+    <div class="summary-row">
+      <div class="summary-card month">
+        <div class="summary-label">本月消费</div>
+        <div class="summary-value" id="monthTotal">¥0.00</div>
+        <div class="summary-sub" id="monthSub"></div>
+      </div>
+      <div class="summary-card year">
+        <div class="summary-label">本年消费</div>
+        <div class="summary-value" id="yearTotal">¥0.00</div>
+        <div class="summary-sub" id="yearSub"></div>
+      </div>
+      <div class="summary-card total-card">
+        <div class="summary-label">累计总支出</div>
+        <div class="summary-value" id="allTotal">¥0.00</div>
+        <div class="summary-sub" id="allSub"></div>
+      </div>
+    </div>
+
+    <!-- 添加记录表单 -->
+    <div class="form-card">
+      <div class="form-row">
+        <div class="form-group">
+          <label>日期</label>
+          <input type="date" id="inputDate">
+        </div>
+        <div class="form-group">
+          <label>项目</label>
+          <input type="text" id="inputItem" placeholder="比如：午餐" maxlength="50">
+        </div>
+        <div class="form-group">
+          <label>分类</label>
+          <select id="inputCategory">
+            <option value="餐饮">餐饮</option>
+            <option value="交通">交通</option>
+            <option value="购物">购物</option>
+            <option value="娱乐">娱乐</option>
+            <option value="居住">居住</option>
+            <option value="医疗">医疗</option>
+            <option value="教育">教育</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>金额</label>
+          <input type="number" id="inputAmount" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <button class="btn-add" onclick="addRecord()">添加</button>
+      </div>
+    </div>
+
+    <!-- 月度汇总 -->
+    <div class="monthly-section">
+      <div class="monthly-header">
+        <span class="monthly-title">📅 月度分类消费</span>
+        <span class="monthly-toggle" id="monthlyToggle" onclick="toggleMonthly()">收起</span>
+      </div>
+      <div class="monthly-grid" id="monthlyGrid"></div>
+    </div>
+
+    <!-- 工具栏：筛选 + 总支出 + 导出 -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div>
+          <span class="total-label">当前筛选</span>
+          <span class="total-amount" id="totalAmount">¥0.00</span>
+        </div>
+        <div class="filter-group">
+          <label>筛选</label>
+          <select class="filter-select" id="filterCategory" onchange="render()">
+            <option value="全部">全部分类</option>
+            <option value="餐饮">餐饮</option>
+            <option value="交通">交通</option>
+            <option value="购物">购物</option>
+            <option value="娱乐">娱乐</option>
+            <option value="居住">居住</option>
+            <option value="医疗">医疗</option>
+            <option value="教育">教育</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn-clear-filter" id="btnClearFilter" onclick="clearMonthFilter()">✕ 取消月份筛选</button>
+        <button class="btn-export" onclick="exportCSV()">导出 CSV</button>
+        <button class="btn-export" onclick="exportJSON()">导出 JSON</button>
+      </div>
+    </div>
+
+    <!-- 记录表格 -->
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:18%">日期</th>
+            <th style="width:28%">项目</th>
+            <th style="width:18%">分类</th>
+            <th style="width:22%" class="col-amount">金额</th>
+            <th style="width:8%"></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+      </table>
+      <div class="empty-tip" id="emptyTip">还没有记录，添加一笔吧</div>
+    </div>
+  </div>
+
+  <script>
+    // 分类颜色映射
+    const CATEGORY_COLORS = {
+      '餐饮': { bg: '#fff3e0', color: '#e65100' },
+      '交通': { bg: '#e3f2fd', color: '#1565c0' },
+      '购物': { bg: '#fce4ec', color: '#c62828' },
+      '娱乐': { bg: '#f3e5f5', color: '#7b1fa2' },
+      '居住': { bg: '#e8f5e9', color: '#2e7d32' },
+      '医疗': { bg: '#e0f7fa', color: '#00838f' },
+      '教育': { bg: '#fff8e1', color: '#f57f17' },
+      '其他': { bg: '#f5f5f5', color: '#616161' },
+    };
+
+    // 从 localStorage 读取数据
+    let records = JSON.parse(localStorage.getItem('ledger_records') || '[]');
+
+    // 兼容旧数据
+    records = records.map(r => {
+      if (!r.category) r.category = '其他';
+      return r;
+    });
+
+    // 当前选中的月份筛选
+    let filterMonth = null; // 格式 "2026-05"
+
+    // 页面加载时设置默认日期，并渲染
+    const inputDate = document.getElementById('inputDate');
+    inputDate.value = new Date().toISOString().split('T')[0];
+    render();
+
+    // 添加记录
+    function addRecord() {
+      const date = document.getElementById('inputDate').value;
+      const item = document.getElementById('inputItem').value.trim();
+      const category = document.getElementById('inputCategory').value;
+      const amount = parseFloat(document.getElementById('inputAmount').value);
+
+      if (!date) { showToast('请选择日期'); return; }
+      if (!item) { showToast('请填写项目名称'); return; }
+      if (isNaN(amount) || amount <= 0) { showToast('请填写有效金额'); return; }
+
+      records.unshift({ id: Date.now(), date, item, category, amount });
+      save();
+      render();
+
+      document.getElementById('inputItem').value = '';
+      document.getElementById('inputAmount').value = '';
+      document.getElementById('inputItem').focus();
+    }
+
+    // 删除记录
+    function deleteRecord(id) {
+      records = records.filter(r => r.id !== id);
+      save();
+      render();
+    }
+
+    // 保存到 localStorage
+    function save() {
+      localStorage.setItem('ledger_records', JSON.stringify(records));
+    }
+
+    // 获取筛选后的记录（分类 + 月份）
+    function getFilteredRecords() {
+      let result = records;
+      const catFilter = document.getElementById('filterCategory').value;
+      if (catFilter !== '全部') {
+        result = result.filter(r => r.category === catFilter);
+      }
+      if (filterMonth) {
+        result = result.filter(r => r.date.startsWith(filterMonth));
+      }
+      return result;
+    }
+
+    // 切换月份筛选
+    function setMonthFilter(month) {
+      if (filterMonth === month) {
+        filterMonth = null; // 取消筛选
+      } else {
+        filterMonth = month;
+      }
+      render();
+    }
+
+    // 清除月份筛选
+    function clearMonthFilter() {
+      filterMonth = null;
+      render();
+    }
+
+    // 展开/收起月度汇总
+    function toggleMonthly() {
+      const grid = document.getElementById('monthlyGrid');
+      const toggle = document.getElementById('monthlyToggle');
+      if (grid.classList.contains('collapsed')) {
+        grid.classList.remove('collapsed');
+        toggle.textContent = '收起';
+      } else {
+        grid.classList.add('collapsed');
+        toggle.textContent = '展开';
+      }
+    }
+
+    // 渲染所有内容
+    function render() {
+      renderSummary();
+      renderMonthlyGrid();
+      renderTable();
+    }
+
+    // 渲染顶部汇总卡片
+    function renderSummary() {
+      const now = new Date();
+      const curMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      const curYear = `${now.getFullYear()}`;
+
+      const monthRecords = records.filter(r => r.date.startsWith(curMonth));
+      const yearRecords = records.filter(r => r.date.startsWith(curYear));
+
+      const monthTotal = monthRecords.reduce((s, r) => s + r.amount, 0);
+      const yearTotal = yearRecords.reduce((s, r) => s + r.amount, 0);
+      const allTotal = records.reduce((s, r) => s + r.amount, 0);
+
+      document.getElementById('monthTotal').textContent = '¥' + monthTotal.toFixed(2);
+      document.getElementById('yearTotal').textContent = '¥' + yearTotal.toFixed(2);
+      document.getElementById('allTotal').textContent = '¥' + allTotal.toFixed(2);
+
+      // 副标题：记录笔数
+      document.getElementById('monthSub').textContent = monthRecords.length > 0 ? `${monthRecords.length} 笔` : '暂无记录';
+      document.getElementById('yearSub').textContent = yearRecords.length > 0 ? `${yearRecords.length} 笔 · 月均 ¥${(yearTotal / (now.getMonth()+1)).toFixed(0)}` : '暂无记录';
+      document.getElementById('allSub').textContent = records.length > 0 ? `${records.length} 笔` : '暂无记录';
+    }
+
+    // 渲染月度汇总网格
+    function renderMonthlyGrid() {
+      // 按月汇总
+      const monthMap = {};
+      records.forEach(r => {
+        const ym = r.date.substring(0, 7); // "2026-05"
+        if (!monthMap[ym]) monthMap[ym] = 0;
+        monthMap[ym] += r.amount;
+      });
+
+      // 按月份降序排列
+      const months = Object.keys(monthMap).sort((a, b) => b.localeCompare(a));
+      const grid = document.getElementById('monthlyGrid');
+
+      if (months.length === 0) {
+        grid.innerHTML = '<div style="color:#ccc;font-size:13px;padding:16px;text-align:center;">暂无月度数据</div>';
+        return;
+      }
+
+      grid.innerHTML = months.map(ym => {
+        const [y, m] = ym.split('-');
+        const isActive = filterMonth === ym;
+        return `
+          <div class="month-item ${isActive ? 'active' : ''}" onclick="setMonthFilter('${ym}')">
+            <span class="month-name">${y}年${parseInt(m)}月</span>
+            <span class="month-amount">¥${monthMap[ym].toFixed(2)}</span>
+          </div>
+        `;
+      }).join('');
+
+      // 更新清除筛选按钮
+      const btnClear = document.getElementById('btnClearFilter');
+      if (filterMonth) {
+        btnClear.classList.add('show');
+      } else {
+        btnClear.classList.remove('show');
+      }
+    }
+
+    // 渲染表格
+    function renderTable() {
+      const filtered = getFilteredRecords();
+      const tbody = document.getElementById('tableBody');
+      const emptyTip = document.getElementById('emptyTip');
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        emptyTip.style.display = 'block';
+        if (records.length === 0) {
+          emptyTip.textContent = '还没有记录，添加一笔吧';
+        } else if (filterMonth) {
+          const [y, m] = filterMonth.split('-');
+          emptyTip.textContent = `${y}年${parseInt(m)}月暂无记录`;
+        } else {
+          emptyTip.textContent = '该分类暂无记录';
+        }
+      } else {
+        emptyTip.style.display = 'none';
+        tbody.innerHTML = filtered.map(r => {
+          const cat = CATEGORY_COLORS[r.category] || CATEGORY_COLORS['其他'];
+          return `
+            <tr>
+              <td class="col-date">${formatDate(r.date)}</td>
+              <td>${escapeHtml(r.item)}</td>
+              <td class="col-category"><span class="category-tag" style="background:${cat.bg};color:${cat.color}">${escapeHtml(r.category)}</span></td>
+              <td class="col-amount">¥${r.amount.toFixed(2)}</td>
+              <td><button class="btn-del" onclick="deleteRecord(${r.id})" title="删除">×</button></td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 当前筛选总支出
+      const total = filtered.reduce((sum, r) => sum + r.amount, 0);
+      document.getElementById('totalAmount').textContent = '¥' + total.toFixed(2);
+    }
+
+    // 格式化日期
+    function formatDate(dateStr) {
+      const [y, m, d] = dateStr.split('-');
+      return `${m}/${d}`;
+    }
+
+    // 防止 XSS
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // 导出 CSV
+    function exportCSV() {
+      const filtered = getFilteredRecords();
+      if (filtered.length === 0) { showToast('没有可导出的记录'); return; }
+
+      let csv = '\uFEFF日期,项目,分类,金额\n';
+      filtered.forEach(r => {
+        csv += `${r.date},"${r.item}","${r.category}",${r.amount.toFixed(2)}\n`;
+      });
+      const total = filtered.reduce((sum, r) => sum + r.amount, 0);
+      csv += `,,,合计:¥${total.toFixed(2)}\n`;
+
+      downloadFile(csv, `记账_${todayStr()}.csv`, 'text/csv;charset=utf-8');
+      showToast('CSV 已导出');
+    }
+
+    // 导出 JSON
+    function exportJSON() {
+      const filtered = getFilteredRecords();
+      if (filtered.length === 0) { showToast('没有可导出的记录'); return; }
+
+      const data = {
+        exportDate: new Date().toLocaleString('zh-CN'),
+        totalRecords: filtered.length,
+        totalAmount: filtered.reduce((sum, r) => sum + r.amount, 0),
+        records: filtered.map(r => ({ date: r.date, item: r.item, category: r.category, amount: r.amount }))
+      };
+
+      const json = JSON.stringify(data, null, 2);
+      downloadFile(json, `记账_${todayStr()}.json`, 'application/json');
+      showToast('JSON 已导出');
+    }
+
+    // 下载文件辅助函数
+    function downloadFile(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // 今天的日期字符串
+    function todayStr() {
+      const d = new Date();
+      return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    // 简易 toast 提示
+    function showToast(msg) {
+      let toast = document.getElementById('toast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:9999;opacity:0;transition:opacity 0.3s;';
+        document.body.appendChild(toast);
+      }
+      toast.textContent = msg;
+      toast.style.opacity = '1';
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+    }
+
+    // 回车键也能添加
+    document.querySelectorAll('.form-group input').forEach(input => {
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') addRecord(); });
+    });
+  </script>
+</body>
+</html>
